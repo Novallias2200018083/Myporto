@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  title     String
+  bio       String
+  about     String
+  avatarUrl String?
+  resumeUrl String?
+  socials   String   // JSON: { "github": "", "linkedin": "", "email": "", "whatsapp": "", "twitter": "" }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  category    String   // "Fullstack", "Frontend", "Backend", "Mobile", "UI/UX"
+  description String
+  coverImage  String
+  demoUrl     String?
+  githubUrl   String?
+  techStack   String   // JSON Array string: ["Next.js", "Tailwind", "SQLite"]
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Skill {
+  id        String   @id @default(uuid())
+  name      String
+  category  String   // "Frontend", "Backend", "Database", "DevOps & Tools"
+  iconName  String   // Lucide icon name, e.g. "Code", "Server", "Database", etc.
+  level     Int      @default(85)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Experience {
+  id          String   @id @default(uuid())
+  type        String   // "WORK" or "EDUCATION"
+  role        String
+  institution String
+  period      String
+  description String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id            String   @id @default(uuid())
+  title         String
+  issuer        String
+  issueDate     String
+  credentialUrl String?
+  imageUrl      String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id               String   @id @default("site-config")
+  availableForHire Boolean  @default(true)
+  statusBadgeText  String   @default("Available for new projects")
+  statsExperience  String   @default("3+ Years")
+  statsProjects    String   @default("25+ Done")
+  statsClients     String   @default("15+ Happy")
+  updatedAt        DateTime @updatedAt
+}
