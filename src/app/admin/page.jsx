@@ -44,7 +44,13 @@ import {
   Github,
   Building2,
   GraduationCap,
-  Calendar
+  Calendar,
+  Printer,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  MapPin
 } from 'lucide-react';
 import DynamicIcon from '@/components/DynamicIcon';
 import ImageUpload from '@/components/ImageUpload';
@@ -73,6 +79,10 @@ export default function AdminDashboard() {
 
   // Certificate Filter States
   const [certSearch, setCertSearch] = useState('');
+
+  // PDF Preview State
+  const [pdfPreviewModal, setPdfPreviewModal] = useState(false);
+  const [pdfZoom, setPdfZoom] = useState(100);
 
   // Data State
   const [user, setUser] = useState(null);
@@ -630,6 +640,15 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 shrink-0 w-full lg:w-auto">
+                  <button
+                    onClick={() => setPdfPreviewModal(true)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+                    title="Buka pratinjau ringkasan CV dan portofolio untuk dicetak sebagai PDF"
+                  >
+                    <FileText className="w-4 h-4 text-teal-400 dark:text-teal-600" />
+                    <span>📄 Export / Cetak PDF Portofolio</span>
+                  </button>
+
                   <Link
                     href="/"
                     target="_blank"
@@ -889,7 +908,7 @@ export default function AdminDashboard() {
                               <img
                                 src={proj.imageUrl}
                                 alt={proj.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-600">
@@ -2892,6 +2911,483 @@ export default function AdminDashboard() {
                 >
                   Hapus Pesan
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF PREVIEW & EXPORT MODAL */}
+      {pdfPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl bg-slate-100 dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-white/10 shadow-2xl flex flex-col max-h-[94vh] overflow-hidden">
+            
+            {/* Top Controls Bar */}
+            <div className="no-print p-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Pratinjau Dokumen Portofolio & CV</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                      A4 Ready
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Format ringkas, padat, dan rapi untuk dikirim ke klien atau rekruter.
+                  </p>
+                </div>
+              </div>
+
+              {/* Controls: Zoom & Actions */}
+              <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-end">
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-1 gap-1">
+                  <button
+                    onClick={() => setPdfZoom((prev) => Math.max(prev - 10, 60))}
+                    className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 px-1 min-w-[36px] text-center">
+                    {pdfZoom}%
+                  </span>
+                  <button
+                    onClick={() => setPdfZoom((prev) => Math.min(prev + 10, 130))}
+                    className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPdfZoom(100)}
+                    className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700 transition-all"
+                    title="Reset Zoom"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const printContent = document.getElementById('portfolio-pdf-document');
+                    if (!printContent) return;
+
+                    const existing = document.getElementById('pdf-print-iframe');
+                    if (existing) existing.remove();
+
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'pdf-print-iframe';
+                    iframe.setAttribute('style', 'position:fixed;width:0;height:0;top:-10000px;left:-10000px;border:none;opacity:0;');
+                    document.body.appendChild(iframe);
+
+                    const iframeDoc = iframe.contentWindow.document;
+                    iframeDoc.open();
+
+                    const pageStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                      .map((el) => el.outerHTML)
+                      .join('\n');
+
+                    iframeDoc.write(`
+                      <!DOCTYPE html>
+                      <html lang="id">
+                        <head>
+                          <title>${user?.name || 'Portofolio'} - CV & Ringkasan Portofolio</title>
+                          <meta charset="utf-8" />
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                          ${pageStyles}
+                          <style>
+                            @page {
+                              size: A4 portrait;
+                              margin: 8mm 10mm 8mm 10mm;
+                            }
+                            * {
+                              -webkit-print-color-adjust: exact !important;
+                              print-color-adjust: exact !important;
+                              box-sizing: border-box !important;
+                            }
+                            html, body {
+                              background: #ffffff !important;
+                              color: #0f172a !important;
+                              margin: 0 !important;
+                              padding: 0 !important;
+                              width: 100% !important;
+                              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                            }
+                            #portfolio-pdf-document {
+                              width: 100% !important;
+                              max-width: 100% !important;
+                              margin: 0 !important;
+                              padding: 0 !important;
+                              box-shadow: none !important;
+                              border: none !important;
+                              transform: none !important;
+                            }
+                            .page-break-avoid {
+                              break-inside: avoid !important;
+                              page-break-inside: avoid !important;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div id="portfolio-pdf-document" style="padding: 0; margin: 0;">
+                            ${printContent.innerHTML}
+                          </div>
+                        </body>
+                      </html>
+                    `);
+                    iframeDoc.close();
+
+                    setTimeout(() => {
+                      iframe.contentWindow.focus();
+                      iframe.contentWindow.print();
+                      setTimeout(() => {
+                        iframe.remove();
+                      }, 2500);
+                    }, 400);
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs text-slate-950 bg-teal-400 hover:bg-teal-300 shadow-md shadow-teal-500/20 transition-all cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak / Simpan PDF</span>
+                </button>
+                
+                <button
+                  onClick={() => setPdfPreviewModal(false)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                  title="Tutup Pratinjau"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Viewport */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 flex justify-center bg-slate-200/80 dark:bg-slate-950/90">
+              
+              {/* Scaled Document Container */}
+              <div
+                style={{
+                  transform: `scale(${pdfZoom / 100})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.15s ease-out'
+                }}
+                className="w-full flex justify-center"
+              >
+                {/* The Printable A4 Document Paper */}
+                <div
+                  id="portfolio-pdf-document"
+                  className="w-full max-w-[210mm] bg-white text-slate-900 rounded-xl shadow-xl p-6 sm:p-9 space-y-5 font-sans text-left border border-slate-300"
+                  style={{ boxSizing: 'border-box' }}
+                >
+                  {/* Top Bar Accent */}
+                  <div className="h-1.5 w-full bg-slate-900 rounded-full" />
+
+                  {/* 1. Header Profile & Contact */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-slate-900 page-break-avoid">
+                    <div className="flex items-center gap-4">
+                      {(() => {
+                        let primaryPhoto = '';
+                        try {
+                          if (user?.avatarUrl && user.avatarUrl.startsWith('[')) {
+                            const arr = JSON.parse(user.avatarUrl);
+                            primaryPhoto = arr[0] || '';
+                          } else if (user?.avatarUrl) {
+                            primaryPhoto = user.avatarUrl;
+                          }
+                        } catch (e) {}
+
+                        return primaryPhoto ? (
+                          <img
+                            src={primaryPhoto}
+                            alt={user?.name || 'Photo'}
+                            className="w-20 h-20 rounded-xl object-cover object-center border-2 border-slate-900 shadow-sm shrink-0 bg-slate-100"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 rounded-xl bg-slate-900 text-white font-black text-2xl flex items-center justify-center shrink-0 shadow-sm">
+                            {(user?.name || 'N').charAt(0)}
+                          </div>
+                        );
+                      })()}
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                            Curriculum Vitae & Portofolio
+                          </span>
+                        </div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-tight">
+                          {user?.name || 'Noval Lias Ramadani'}
+                        </h1>
+                        <p className="text-xs font-bold text-teal-800 tracking-wide">
+                          {user?.title || 'Fullstack Developer & System Analyst'}
+                        </p>
+                        
+                        {/* Compact Stats */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
+                            {settings?.statsExperience || '3+ Thn'} Pengalaman
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-300">
+                            {settings?.statsProjects || '25+'} Proyek Selesai
+                          </span>
+                          {settings?.availableForHire && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                              Available for Hire
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contacts Grid */}
+                    <div className="space-y-1 text-[11px] text-slate-700 shrink-0 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200 w-full sm:w-auto font-mono">
+                      {user?.socials?.email && (
+                        <div className="flex items-center sm:justify-end gap-1.5">
+                          <span>{user.socials.email}</span>
+                          <Mail className="w-3 h-3 text-teal-700 shrink-0" />
+                        </div>
+                      )}
+                      {user?.socials?.whatsapp && (
+                        <div className="flex items-center sm:justify-end gap-1.5">
+                          <span>{user.socials.whatsapp}</span>
+                          <Phone className="w-3 h-3 text-teal-700 shrink-0" />
+                        </div>
+                      )}
+                      {user?.socials?.github && (
+                        <div className="flex items-center sm:justify-end gap-1.5">
+                          <span>{user.socials.github.replace(/^https?:\/\//, '')}</span>
+                          <Github className="w-3 h-3 text-teal-700 shrink-0" />
+                        </div>
+                      )}
+                      {user?.socials?.linkedin && (
+                        <div className="flex items-center sm:justify-end gap-1.5">
+                          <span>{user.socials.linkedin.replace(/^https?:\/\//, '')}</span>
+                          <Globe className="w-3 h-3 text-teal-700 shrink-0" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Executive Summary / Bio */}
+                  <div className="space-y-2 page-break-avoid">
+                    <div className="flex items-center gap-2 border-b-2 border-slate-200 pb-1">
+                      <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">01</span>
+                      <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                        Profil & Ringkasan Eksekutif
+                      </h2>
+                    </div>
+                    {user?.bio && (
+                      <div className="p-2.5 bg-slate-50 border-l-3 border-teal-600 rounded-r-lg">
+                        <p className="text-[11px] font-semibold text-slate-900 leading-snug italic">
+                          "{user.bio}"
+                        </p>
+                      </div>
+                    )}
+                    {user?.about && (
+                      <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                        {user.about}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 3. Core Technical Skills */}
+                  {skills.length > 0 && (
+                    <div className="space-y-2.5 page-break-avoid">
+                      <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">02</span>
+                          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                            Keahlian & Matriks Teknologi
+                          </h2>
+                        </div>
+                        <span className="text-[9px] text-slate-500 font-mono font-semibold">
+                          Total {skills.length} Stack
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {skills.map((s) => (
+                          <div key={s.id} className="p-2 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="font-bold text-[11px] text-slate-950 truncate">{s.name}</div>
+                              <span className="text-[9px] font-mono font-bold text-teal-800 bg-teal-100/70 px-1 py-0.2 rounded">
+                                {s.level}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="text-[9px] text-slate-500 font-medium truncate">{s.category}</span>
+                              <div className="w-14 h-1 bg-slate-200 rounded-full overflow-hidden shrink-0">
+                                <div
+                                  className="h-full bg-teal-600 rounded-full"
+                                  style={{ width: `${s.level}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. Career Experience & Education Timeline */}
+                  {experiences.length > 0 && (
+                    <div className="space-y-3 page-break-avoid">
+                      <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">03</span>
+                          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                            Riwayat Pengalaman Karir & Pendidikan
+                          </h2>
+                        </div>
+                      </div>
+                      <div className="space-y-2.5">
+                        {experiences.map((exp) => {
+                          const isEdu = exp.type === 'education';
+                          return (
+                            <div key={exp.id} className="space-y-1 page-break-avoid border-l-2 border-slate-900 pl-3 py-0.5">
+                              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="font-bold text-[11.5px] text-slate-950">
+                                    {exp.role}
+                                  </span>
+                                  <span className="text-slate-400 font-normal">|</span>
+                                  <span className="font-bold text-[11px] text-teal-800">
+                                    {exp.institution}
+                                  </span>
+                                  <span className={`text-[8.5px] font-bold px-1.5 py-0.2 rounded border ${
+                                    isEdu
+                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                      : 'bg-teal-50 text-teal-800 border-teal-200'
+                                  }`}>
+                                    {isEdu ? 'Pendidikan' : 'Pengalaman Kerja'}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-mono">
+                                  {exp.period}
+                                </span>
+                              </div>
+                              <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify">
+                                {exp.description}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Key Portfolio Projects Showcase */}
+                  {projects.length > 0 && (
+                    <div className="space-y-3 page-break-avoid">
+                      <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">04</span>
+                          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                            Karya & Portofolio Proyek Terpilih
+                          </h2>
+                        </div>
+                        <span className="text-[9px] text-slate-500 font-mono font-semibold">
+                          Total {projects.length} Proyek
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {projects.map((p) => {
+                          const techList = Array.isArray(p.techStack)
+                            ? p.techStack
+                            : (typeof p.techStack === 'string' ? p.techStack.split(',').map((s) => s.trim()).filter(Boolean) : []);
+
+                          return (
+                            <div key={p.id} className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/70 space-y-1.5 page-break-avoid flex flex-col justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-1.5">
+                                  <h4 className="font-bold text-[11px] text-slate-950 truncate">{p.title}</h4>
+                                  <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-800 shrink-0">
+                                    {p.category}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-600 line-clamp-2 leading-relaxed">
+                                  {p.description}
+                                </p>
+                              </div>
+
+                              <div className="space-y-1 pt-1 border-t border-slate-200">
+                                {techList.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {techList.map((t, idx) => (
+                                      <span key={idx} className="text-[8.5px] font-semibold bg-white border border-slate-200 px-1 py-0.2 rounded text-slate-700">
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {(p.demoUrl || p.githubUrl) && (
+                                  <div className="flex items-center gap-2 text-[9px] font-mono text-teal-800">
+                                    {p.demoUrl && (
+                                      <span className="truncate">
+                                        Live: {p.demoUrl.replace(/^https?:\/\//, '')}
+                                      </span>
+                                    )}
+                                    {p.githubUrl && (
+                                      <span className="truncate">
+                                        Code: {p.githubUrl.replace(/^https?:\/\//, '')}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 6. Certificates & Credentials */}
+                  {certificates.length > 0 && (
+                    <div className="space-y-2.5 page-break-avoid">
+                      <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">05</span>
+                          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                            Sertifikasi & Lisensi Resmi
+                          </h2>
+                        </div>
+                        <span className="text-[9px] text-slate-500 font-mono font-semibold">
+                          Total {certificates.length} Sertifikat
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {certificates.map((c) => (
+                          <div key={c.id} className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="font-bold text-[11px] text-slate-950 truncate">{c.title}</div>
+                              <div className="text-[9.5px] text-teal-800 font-semibold">{c.issuer}</div>
+                            </div>
+                            <span className="text-[9.5px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0 font-mono">
+                              {c.issueDate}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minimalist Document Stamp */}
+                  <div className="pt-3 border-t-2 border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-1 text-[9px] text-slate-500 font-mono page-break-avoid">
+                    <div>
+                      Dokumen Resmi Portofolio • {user?.name || 'Noval Lias Ramadani'}
+                    </div>
+                    <div>
+                      Dicetak pada: {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

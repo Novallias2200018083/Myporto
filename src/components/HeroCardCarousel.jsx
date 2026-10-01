@@ -113,30 +113,33 @@ export default function HeroCardCarousel({ user }) {
               }}
               className="absolute w-[88%] sm:w-[90%] h-[420px] sm:h-[450px] rounded-[30px] overflow-hidden bg-slate-950 border border-white/20 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] ring-1 ring-teal-500/20 transition-all duration-500 ease-out hover:shadow-teal-500/25 group cursor-pointer"
             >
-              <div className="relative w-full h-full bg-slate-950 overflow-hidden">
+              <div className="relative w-full h-full bg-[#0b1324] overflow-hidden flex items-center justify-center">
                 <img
                   src={card.image}
                   alt={card.title}
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover object-center scale-[0.85] group-hover:scale-[0.89] transition-transform duration-700"
                 />
 
-                {/* Seamless Smooth Dark Gradient at Bottom */}
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
+                {/* Subtle Edge Vignette for Seamless Blending */}
+                <div className="absolute inset-0 bg-radial from-transparent via-transparent to-[#0b1324]/80 pointer-events-none" />
+
+                {/* Sleek Gradient at Bottom */}
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent pointer-events-none" />
 
                 {/* Bottom Overlay Info */}
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 space-y-2 pointer-events-none z-10">
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 space-y-1 pointer-events-none z-10">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-extrabold text-lg sm:text-xl text-white tracking-tight leading-snug drop-shadow-md">
+                    <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight leading-snug drop-shadow-md">
                       {card.title}
                     </h3>
-                    <div className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-mono text-teal-300 font-semibold shrink-0 shadow-sm">
+                    <div className="px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-mono text-teal-300 font-semibold shrink-0 shadow-sm">
                       0{idx + 1} / 03
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,1)] shrink-0 animate-pulse" />
-                    <p className="text-xs sm:text-sm font-semibold text-teal-300 tracking-wide drop-shadow">
+                  <div className="flex items-center gap-1.5 pt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,1)] shrink-0 animate-pulse" />
+                    <p className="text-xs font-semibold text-teal-300 tracking-wide drop-shadow truncate">
                       {card.role}
                     </p>
                   </div>

@@ -86,7 +86,7 @@ export default function Certificates({ certificates = [] }) {
                     <img
                       src={cert.imageUrl}
                       alt={cert.title}
-                      className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover object-center group-hover/thumb:scale-105 transition-transform duration-500"
                     />
 
                     {/* Gradient Overlay */}
