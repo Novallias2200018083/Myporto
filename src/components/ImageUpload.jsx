@@ -3,6 +3,41 @@
 import { useState } from 'react';
 import { UploadCloud, Image as ImageIcon, Loader2, X, CheckCircle } from 'lucide-react';
 
+// Client-side image compression helper
+function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('Gagal memproses gambar'));
+    };
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+  });
+}
+
 export default function ImageUpload({ value = '', onChange, label = 'Pilih Foto / Gambar', className = '', compact = false }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,22 +46,30 @@ export default function ImageUpload({ value = '', onChange, label = 'Pilih Foto 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Ukuran file maksimal 5MB');
+    // Validate type
+    if (!file.type.startsWith('image/')) {
+      setError('File harus berupa gambar (JPG, PNG, WebP)');
+      return;
+    }
+
+    // Validate size (max 10MB input before compression)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Ukuran file maksimal 10MB');
       return;
     }
 
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      // 1. Kompresi gambar otomatis di sisi browser agar ringan dan cepat
+      const compressedDataUrl = await compressImage(file, 1200, 1200, 0.85);
+
+      // 2. Simpan URL terkompresi
       const res = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: compressedDataUrl }),
       });
 
       const data = await res.json();
@@ -36,7 +79,8 @@ export default function ImageUpload({ value = '', onChange, label = 'Pilih Foto 
 
       onChange(data.url);
     } catch (err) {
-      setError(err.message);
+      console.error('Upload failed:', err);
+      setError(err.message || 'Gagal memproses gambar');
     } finally {
       setUploading(false);
     }

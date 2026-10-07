@@ -13,6 +13,22 @@ export async function POST(request) {
   }
 
   try {
+    const contentType = request.headers.get('content-type') || '';
+
+    // 1. Jika dikirim sebagai JSON Base64
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      if (!body.image) {
+        return NextResponse.json({ error: 'Tidak ada data gambar' }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        url: body.image,
+        message: 'Foto berhasil disimpan',
+      });
+    }
+
+    // 2. Jika dikirim sebagai FormData
     const formData = await request.formData();
     const file = formData.get('file');
 
@@ -22,25 +38,13 @@ export async function POST(request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    // Sanitasi nama file & tambahkan timestamp agar unik
-    const originalName = file.name || 'image.png';
-    const extension = path.extname(originalName) || '.png';
-    const cleanBaseName = path.basename(originalName, extension).replace(/[^\w-]/g, '');
-    const filename = `${cleanBaseName}-${Date.now()}${extension}`;
-
-    // Pastikan folder public/uploads ada
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadDir, { recursive: true });
-
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
-
-    const fileUrl = `/uploads/${filename}`;
+    const mimeType = file.type || 'image/jpeg';
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       success: true,
-      url: fileUrl,
+      url: dataUrl,
       message: 'Foto berhasil diunggah',
     });
   } catch (error) {
